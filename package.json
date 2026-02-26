@@ -1,0 +1,38 @@
+{
+  "name": "compress-image-mcp",
+  "version": "1.0.1",
+  "description": "MCP server for compressing images with Tinify",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "compress-image-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "publish:public": "npm publish --access public"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "image",
+    "compress",
+    "tinify"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/compress-image-mcp.git"
+  },
+  "homepage": "https://github.com/your-username/compress-image-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/your-username/compress-image-mcp/issues"
+  },
+  "files": [
+    "index.js"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "tinify": "^1.6.0",
+    "zod": "^3.23.0"
+  }
+}
