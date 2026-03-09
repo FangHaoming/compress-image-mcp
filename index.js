@@ -46,7 +46,7 @@ async function handleCompressImage(args) {
   } else {
     const { execSync } = await import('child_process')
     try {
-      const diffOutput = execSync('git diff --staged --diff-filter=ACMR --name-only -z', {
+      const diffOutput = execSync('git diff --cached --diff-filter=ACMR --name-only -z', {
         encoding: 'utf8',
         cwd: projectRoot,
       })
