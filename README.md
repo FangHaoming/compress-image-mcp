@@ -38,5 +38,37 @@ npm install -g compress-image-mcp
 ## 工具说明
 
 - **compress_image**
-  - `folderPath`（可选）：要压缩的目录路径（相对项目根或绝对路径）。不传则压缩当前 git 暂存区中的图片。
+  - `imagePath`（可选）：要压缩的**单个图片路径**（相对项目根或绝对路径）。若同时传入 `imagePath` 与 `folderPath`，将**优先使用 `imagePath`**。
+  - `folderPath`（可选）：要压缩的目录路径（相对项目根或绝对路径）。不传且未指定 `imagePath` 时，将压缩当前 git 暂存区中的图片。
+  - `apiKeyList`（可选）：Tinify API Key 数组。不传时使用 `COMPRESS_IMAGE_API_KEYS` 环境变量（英文逗号分隔）。
   - 支持格式：jpg、png、gif、webp。
+
+### 使用示例
+
+#### 1. 压缩单个图片
+
+在对话中让 Cursor 调用 MCP 工具时，可传入：
+
+```json
+{
+  "tool": "compress_image",
+  "arguments": {
+    "imagePath": "assets/images/logo.png"
+  }
+}
+```
+
+#### 2. 压缩某个目录下的所有图片
+
+```json
+{
+  "tool": "compress_image",
+  "arguments": {
+    "folderPath": "assets/images"
+  }
+}
+```
+
+#### 3. 压缩 git 暂存区中的图片
+
+不传 `imagePath` 和 `folderPath`，只需确保图片已 `git add` 到暂存区，然后在对话中调用 `compress_image` 即可自动查找并压缩暂存区中的图片。

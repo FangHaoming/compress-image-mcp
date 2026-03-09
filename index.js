@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import fs from 'fs'
+import p from 'path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
@@ -21,6 +23,7 @@ const server = new McpServer({
 
 async function handleCompressImage(args) {
   const folderPath = args && args.folderPath
+  const imagePath = args && args.imagePath
   const keys =
     args && args.apiKeyList && args.apiKeyList.length ? args.apiKeyList : defaultApiKeyList
   if (!keys || keys.length === 0) {
@@ -33,8 +36,33 @@ async function handleCompressImage(args) {
       ],
     }
   }
+
   let imgFilePathList = []
-  if (folderPath) {
+
+  if (imagePath) {
+    const fullPath = p.isAbsolute(imagePath) ? imagePath : p.join(projectRoot, imagePath)
+    if (!fs.existsSync(fullPath)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `图片不存在: ${imagePath}`,
+          },
+        ],
+      }
+    }
+    if (!/\.(jpg|png|gif|webp)$/i.test(fullPath)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `仅支持 jpg/png/gif/webp 图片: ${imagePath}`,
+          },
+        ],
+      }
+    }
+    imgFilePathList = [p.relative(projectRoot, fullPath)]
+  } else if (folderPath) {
     imgFilePathList = getAllImageFiles(folderPath, projectRoot)
     if (imgFilePathList.length === 0) {
       return {
@@ -46,7 +74,7 @@ async function handleCompressImage(args) {
   } else {
     const { execSync } = await import('child_process')
     try {
-      const diffOutput = execSync('git diff --cached --diff-filter=ACMR --name-only -z', {
+      const diffOutput = execSync('git diff --staged --diff-filter=ACMR --name-only -z', {
         encoding: 'utf8',
         cwd: projectRoot,
       })
@@ -57,7 +85,7 @@ async function handleCompressImage(args) {
         content: [
           {
             type: 'text',
-            text: `获取 git 暂存区文件失败: ${e.message}。可传入 folderPath 指定目录压缩。`,
+            text: `获取 git 暂存区文件失败: ${e.message}。可传入 folderPath 或 imagePath 指定压缩目标。`,
           },
         ],
       }
@@ -67,7 +95,7 @@ async function handleCompressImage(args) {
         content: [
           {
             type: 'text',
-            text: '暂存区中没有 jpg/png/gif/webp 图片。请先 git add 图片文件，或传入 folderPath 指定目录。',
+            text: '暂存区中没有 jpg/png/gif/webp 图片。请先 git add 图片文件，或传入 folderPath / imagePath 指定压缩目标。',
           },
         ],
       }
@@ -101,13 +129,19 @@ server.registerTool(
   'compress_image',
   {
     description:
-      '使用 Tinify 压缩项目中的图片（jpg/png/gif/webp）。可指定 folderPath 压缩该目录下所有图片，不指定则压缩 git 暂存区中的图片。API Key 可在 mcp.json 的 env.COMPRESS_IMAGE_API_KEYS 中配置，或调用时传 apiKeyList。',
+      '使用 Tinify 压缩项目中的图片（jpg/png/gif/webp）。可指定 imagePath 压缩单个图片，或指定 folderPath 压缩目录下所有图片，不指定则压缩 git 暂存区中的图片。API Key 可在 mcp.json 的 env.COMPRESS_IMAGE_API_KEYS 中配置，或调用时传 apiKeyList。',
     inputSchema: {
+      imagePath: z
+        .string()
+        .optional()
+        .describe(
+          '可选。要压缩的单个图片路径（相对项目根或绝对路径）。若同时传入 imagePath 与 folderPath，将优先使用 imagePath。',
+        ),
       folderPath: z
         .string()
         .optional()
         .describe(
-          '可选。要压缩的目录路径（相对项目根或绝对路径）。不传则压缩当前 git 暂存区中的图片。',
+          '可选。要压缩的目录路径（相对项目根或绝对路径）。不传且未指定 imagePath 时，将压缩当前 git 暂存区中的图片。',
         ),
       apiKeyList: z
         .array(z.string())
